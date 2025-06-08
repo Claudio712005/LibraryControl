@@ -11,6 +11,8 @@ public class Router {
   private static final Router instance = new Router();
   private final Map<String, HttpHandler> routes = new HashMap<>();
 
+  private String API_PREFIX = "/library/api/v1";
+
   private Router(){
 
   }
@@ -25,7 +27,11 @@ public class Router {
 
   public void applyRoutes(HttpServer server){
     for(Map.Entry<String, HttpHandler> entry : routes.entrySet()){
-      server.createContext(entry.getKey(), entry.getValue());
+      server.createContext(API_PREFIX + entry.getKey(), entry.getValue());
     }
+  }
+
+  public String getApiPrefix() {
+    return API_PREFIX;
   }
 }

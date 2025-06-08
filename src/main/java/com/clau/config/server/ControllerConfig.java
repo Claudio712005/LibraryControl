@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 
 public class ControllerConfig {
 
@@ -19,5 +20,23 @@ public class ControllerConfig {
     try (OutputStream os = exchange.getResponseBody()) {
       os.write(responseBytes);
     }
+  }
+
+  protected Object getParam(String param, HttpExchange exchange) {
+    URI query = exchange.getRequestURI();
+
+    String queryString = query.getQuery();
+
+    if (queryString != null && !queryString.isEmpty()) {
+      String[] params = queryString.split("&");
+      for (String p : params) {
+        String[] keyValue = p.split("=");
+        if (keyValue.length == 2 && keyValue[0].equals(param)) {
+          return keyValue[1];
+        }
+      }
+    }
+
+    return null;
   }
 }

@@ -21,6 +21,12 @@ public class PropertiesConfig {
   }
 
   public String getProperty(String key) {
-    return properties.getProperty(key);
+    String properti = properties.getProperty(key);
+    if (properti == null) {
+      logger.warning("Propriedade não encontrada: " + key);
+      return null;
+    }
+
+    return properti;
   }
 }

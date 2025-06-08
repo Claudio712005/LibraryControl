@@ -4,7 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class MethodHttpHandler implements HttpHandler {
@@ -26,14 +26,16 @@ public class MethodHttpHandler implements HttpHandler {
       } else {
         throw new IllegalArgumentException("Método handler precisa receber um HttpExchange como parâmetro.");
       }
-    } catch (Exception e) {
-      String error = "Erro interno: " + e.getMessage();
-      e.printStackTrace();
-
-      exchange.sendResponseHeaders(500, error.length());
-      try (OutputStream os = exchange.getResponseBody()) {
-        os.write(error.getBytes());
+    } catch (InvocationTargetException e) {
+      // Lança a causa real (ex: NotFoundException)
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else {
+        throw new RuntimeException(cause);
       }
+    } catch (IllegalAccessException e) {
+      throw new RuntimeException("Não foi possível acessar o método handler.", e);
     }
   }
 }

@@ -21,14 +21,14 @@ public class JwtUtil {
     this.ALGORITHM = Algorithm.HMAC256(SECRET);
   }
 
-  public static String gerarToken(String email) {
+  public String gerarToken(String email) {
     return JWT.create()
             .withSubject(email)
             .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
             .sign(ALGORITHM);
   }
 
-  public static String validarToken(String token) {
+  public String validarToken(String token) {
     return JWT.require(ALGORITHM)
             .build()
             .verify(token)
