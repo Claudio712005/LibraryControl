@@ -1,6 +1,13 @@
 package com.clau.service;
 
+import com.clau.dao.AutorDAO;
+import com.clau.dao.GeneroDAO;
 import com.clau.dao.LivroDAO;
+import com.clau.dto.request.LivroRequestDTO;
+import com.clau.dto.response.LivroResponseDTO;
+import com.clau.exception.NotFoundException;
+import com.clau.model.Autor;
+import com.clau.model.Genero;
 import com.clau.model.Livro;
 
 import java.util.List;
@@ -11,12 +18,41 @@ public class LivroService {
   private static final Logger logger = Logger.getLogger(LivroService.class.getName());
 
   private LivroDAO livroDAO;
+  private AutorService autorService;
+  private GeneroService generoService;
 
   public LivroService() {
     this.livroDAO = new LivroDAO();
+    this.autorService = new AutorService();
+    this.generoService = new GeneroService();
   }
 
   public List<Livro> findAll(){
     return livroDAO.findAll();
+  }
+
+  public Livro findById(Long id) {
+    Livro livro = livroDAO.findById(id);
+    if (livro == null) {
+      logger.warning("Livro com ID " + id + " não encontrado.");
+      throw new NotFoundException("Livro não encontrado");
+    }
+    return livro;
+  }
+
+  public void cadastrarLisvro(LivroRequestDTO requestDTO){
+
+    Autor autor = autorService.findById(requestDTO.getIdAutor());
+
+    Genero genero = generoService.findById(requestDTO.getIdGenero());
+
+    Livro livro = new Livro();
+    livro.setTitulo(requestDTO.getTitulo());
+    livro.setAutor(autor);
+    livro.setAnoPublicacao(requestDTO.getAnoPublicacao());
+    livro.setGenero(genero);
+    livro.setDescricao(requestDTO.getDescricao());
+
+    livroDAO.insert(livro);
   }
 }

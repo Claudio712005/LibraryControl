@@ -5,6 +5,8 @@ import com.sun.net.httpserver.HttpServer;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Router {
 
@@ -27,26 +29,48 @@ public class Router {
   }
 
   public void applyRoutes(HttpServer server) {
-    for (Map.Entry<String, Map<String, HttpHandler>> entry : routes.entrySet()) {
-      String path = entry.getKey();
-      Map<String, HttpHandler> methodHandlers = entry.getValue();
+    server.createContext(API_PREFIX, exchange -> {
+      String path = exchange.getRequestURI().getPath()
+              .substring(API_PREFIX.length());
+      String method = exchange.getRequestMethod().toUpperCase();
 
-      server.createContext(API_PREFIX + path, exchange -> {
-        String requestMethod = exchange.getRequestMethod().toUpperCase();
-        HttpHandler handler = methodHandlers.get(requestMethod);
-
-        if (handler != null) {
-          handler.handle(exchange);
-        } else {
-          String response = "Método HTTP não suportado para este endpoint";
-          exchange.sendResponseHeaders(405, response.length());
-          exchange.getResponseBody().write(response.getBytes());
-          exchange.close();
+      for (String template : routes.keySet()) {
+        Pattern pattern = toRegex(template);
+        Matcher m = pattern.matcher(path);
+        if (m.matches()) {
+          HttpHandler handler = routes.get(template).get(method);
+          if (handler != null) {
+            Map<String,String> pathVars = extractVariables(template, m);
+            for (var e : pathVars.entrySet()) {
+              exchange.setAttribute(e.getKey(), e.getValue());
+            }
+            handler.handle(exchange);
+            return;
+          }
         }
-      });
-    }
+      }
+      String resp = "Endereço ou método HTTP não suportado";
+      exchange.sendResponseHeaders(404, resp.length());
+      exchange.getResponseBody().write(resp.getBytes());
+      exchange.close();
+    });
   }
 
+  Pattern toRegex(String template) {
+    String regex = template.replaceAll("\\{([^/]+)\\}", "(?<$1>[^/]+)");
+    return Pattern.compile("^" + regex + "$");
+  }
+
+  Map<String,String> extractVariables(String template, Matcher m) {
+    Map<String,String> vars = new HashMap<>();
+    Pattern p = Pattern.compile("\\{([^/]+)\\}");
+    Matcher mm = p.matcher(template);
+    while (mm.find()) {
+      String var = mm.group(1);
+      vars.put(var, m.group(var));
+    }
+    return vars;
+  }
 
   public String getApiPrefix() {
     return API_PREFIX;

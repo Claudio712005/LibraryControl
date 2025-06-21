@@ -52,6 +52,13 @@ public class ControllerConfig {
     return null;
   }
 
+  protected String getPathVariable(String variable, HttpExchange exchange) {
+    String path = exchange.getRequestURI().getPath();
+    String[] segments = path.split("/");
+
+    return segments.length > 0 ? segments[segments.length - 1] : null;
+  }
+
   protected Object getBody(HttpExchange exchange, Class<?> clazz) throws Exception {
 
     if (exchange.getRequestBody() == null) {

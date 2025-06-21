@@ -33,17 +33,36 @@ public class GenericDAO<T> {
 
       field.setAccessible(true);
       Column column = field.getAnnotation(Column.class);
-      String columnName = column != null ? column.name() : field.getName();
+      ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
+
+      String columnName = "";
+
+      if (manyToOne != null) {
+        columnName = manyToOne.nameColumn();
+      } else {
+        columnName = column != null ? column.name() : field.getName();
+      }
 
       columns.add(columnName);
       placeholders.add("?");
+
       try {
+        Object value = field.get(entity);
+
         if (field.getType().isEnum()) {
-          values.add(((Enum<?>) field.get(entity)).name());
+          values.add(((Enum<?>) value).name());
+        } else if (manyToOne != null) {
+          if (value != null) {
+            Field foreignKeyField = value.getClass().getDeclaredField(manyToOne.foreignKey());
+            foreignKeyField.setAccessible(true);
+            values.add(foreignKeyField.get(value));
+          } else {
+            values.add(null);
+          }
         } else {
-          values.add(field.get(entity));
+          values.add(value);
         }
-      } catch (IllegalAccessException e) {
+      } catch (IllegalAccessException | NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
     }
