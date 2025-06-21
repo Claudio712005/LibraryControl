@@ -2,6 +2,7 @@ package com.clau.util;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.clau.enums.Role;
 import com.clau.config.PropertiesConfig;
 
 import java.util.Date;
@@ -21,9 +22,10 @@ public class JwtUtil {
     this.ALGORITHM = Algorithm.HMAC256(SECRET);
   }
 
-  public String gerarToken(String email) {
+  public String gerarToken(String email, Role role) {
     return JWT.create()
             .withSubject(email)
+            .withClaim("role", role.getNome())
             .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
             .sign(ALGORITHM);
   }
@@ -34,4 +36,13 @@ public class JwtUtil {
             .verify(token)
             .getSubject();
   }
+
+  public String getRoleFromToken(String token) {
+    return JWT.require(ALGORITHM)
+            .build()
+            .verify(token)
+            .getClaim("role")
+            .asString();
+  }
+
 }

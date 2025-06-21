@@ -1,15 +1,26 @@
 package com.clau.dto.response;
 
+import com.clau.enums.Role;
+
 public class UsuarioResponseDTO {
 
   private Long id;
   private String nome;
   private String email;
+  private String role;
 
-  public UsuarioResponseDTO(Long id, String nome, String email) {
+  public UsuarioResponseDTO(Long id, String nome, String email, String role) {
     this.id = id;
     this.nome = nome;
     this.email = email;
+    this.role = role;
+  }
+
+  public UsuarioResponseDTO(Long id, String nome, String email, Role role) {
+    this.id = id;
+    this.nome = nome;
+    this.email = email;
+    this.role = role != null ? role.getNome() : null;
   }
 
   public UsuarioResponseDTO() {

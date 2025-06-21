@@ -1,19 +1,24 @@
 package com.clau.middleware;
 
+import com.clau.enums.Role;
 import com.clau.util.JwtUtil;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 public class AuthMiddleware implements HttpHandler {
+
   private final HttpHandler next;
   private JwtUtil jwtUtil;
+  private List<Role> allowedRoles;
 
-  public AuthMiddleware(HttpHandler next) {
+  public AuthMiddleware(HttpHandler next, Role[] allowedRoles) {
     this.next = next;
     this.jwtUtil = new JwtUtil();
+    this.allowedRoles = List.of(allowedRoles);
   }
 
   @Override
@@ -21,7 +26,7 @@ public class AuthMiddleware implements HttpHandler {
     String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
     if(authHeader == null || !authHeader.startsWith("Bearer ")) {
-      exchange.sendResponseHeaders(401, -1);
+      sendUnauthorized(exchange);
       return;
     }
 
@@ -32,11 +37,19 @@ public class AuthMiddleware implements HttpHandler {
       if(subject == null) {
         sendForbidden(exchange);
       } else {
+        String roleName = jwtUtil.getRoleFromToken(token);
+
+        Role userRole = Role.valueOf(roleName.toUpperCase());
+        if (!allowedRoles.isEmpty() && !allowedRoles.contains(userRole)) {
+          sendForbidden(exchange);
+          return;
+        }
+
         next.handle(exchange);
       }
 
     } catch (Exception e) {
-      sendUnauthorized(exchange);
+      throw e;
     }
   }
 

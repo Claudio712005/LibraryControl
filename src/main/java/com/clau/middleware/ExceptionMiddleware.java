@@ -1,6 +1,8 @@
 package com.clau.middleware;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.clau.exception.BadRequestException;
+import com.clau.exception.ConflictException;
 import com.clau.exception.NotFoundException;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -24,6 +26,10 @@ public class ExceptionMiddleware implements HttpHandler {
       sendResponse(exchange, 404, e.getMessage());
     } catch (BadRequestException e) {
       sendResponse(exchange, 400, e.getMessage());
+    } catch (ConflictException e) {
+      sendResponse(exchange, 409, e.getMessage());
+    } catch (TokenExpiredException e){
+      sendResponse(exchange, 401, "Token expirado");
     } catch (Exception e) {
       e.printStackTrace();
       sendResponse(exchange, 500, "Erro interno do servidor");

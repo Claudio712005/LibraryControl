@@ -1,12 +1,12 @@
 package com.clau.dao;
 
+import com.clau.enums.Role;
 import com.clau.config.dao.GenericDAO;
 import com.clau.config.database.DataBaseConfig;
 import com.clau.exception.AppDataException;
 import com.clau.model.Usuario;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 public class UsuarioDAO extends GenericDAO<Usuario> {
@@ -20,34 +20,44 @@ public class UsuarioDAO extends GenericDAO<Usuario> {
     this.dataBaseConfig = new DataBaseConfig();
   }
 
-  public Usuario getUsuarioByEmailAndSenha(String email, String senha){
+  public Usuario getUsuarioByEmailAndSenha(String email, String senha) {
     Usuario usuario = null;
 
-    try(Connection con = DataBaseConfig.getConnection()){
-      String sql = "SELECT * FROM usuarios WHERE email = ? AND senha = ?";
+    var resultSet = this.executeQuery("SELECT * FROM usuarios WHERE email = ? AND senha = ?", email, senha);
 
-      PreparedStatement statement = con.prepareStatement(sql);
-      statement.setString(1, email);
-      statement.setString(2, senha);
-
-      var resultSet = statement.executeQuery();
-
-      if(resultSet.next()){
+    try {
+      if (resultSet.next()) {
         usuario = new Usuario();
         usuario.setId(resultSet.getLong("id"));
         usuario.setNome(resultSet.getString("nome"));
         usuario.setEmail(resultSet.getString("email"));
         usuario.setSenha(resultSet.getString("senha"));
+        usuario.setRoleId(Role.fromNome(resultSet.getString("role_id")));
       } else {
         logger.warning("Nenhum usuário encontrado com o email e senha informados: " + email);
       }
+    } catch (SQLException e) {
+      throw new AppDataException("Erro ao buscar usuário: " + e.getMessage(), e);
+    }
 
-    } catch (AppDataException e){
-      logger.severe("Erro ao obter conexão com o banco de dados: " + e.getMessage());
-      throw new RuntimeException("Erro ao obter conexão com o banco de dados", e);
-    } catch (Exception e) {
-      logger.severe("Erro ao buscar usuário por email e senha: " + e.getMessage());
-      throw new RuntimeException("Erro ao buscar usuário por email e senha", e);
+    return usuario;
+  }
+
+  public Usuario findByEmail(String email) {
+    Usuario usuario = null;
+
+    var resultSet = this.executeQuery("SELECT * FROM usuarios WHERE email = ?", email);
+
+    try {
+      if (resultSet.next()) {
+        usuario = new Usuario();
+        usuario.setId(resultSet.getLong("id"));
+        usuario.setNome(resultSet.getString("nome"));
+        usuario.setEmail(resultSet.getString("email"));
+        usuario.setSenha(resultSet.getString("senha"));
+      }
+    } catch (SQLException e) {
+      throw new AppDataException("Erro ao buscar usuário por email: " + e.getMessage(), e);
     }
 
     return usuario;

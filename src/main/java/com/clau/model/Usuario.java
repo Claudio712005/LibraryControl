@@ -1,5 +1,6 @@
 package com.clau.model;
 
+import com.clau.enums.Role;
 import com.clau.annotation.Column;
 import com.clau.annotation.Id;
 import com.clau.annotation.Table;
@@ -20,14 +21,26 @@ public class Usuario {
   @Column(name = "senha")
   private String senha;
 
+  @Column(name = "role_id")
+  private Role roleId;
+
   public Usuario() {
   }
 
-  public Usuario(Long id, String nome, String email, String senha) {
+  public Usuario(Long id, String nome, String email, String senha, Integer roleId) {
     this.id = id;
     this.nome = nome;
     this.email = email;
     this.senha = senha;
+    this.roleId = Role.fromId(roleId);
+  }
+
+  public Usuario(Long id, String nome, String email, String senha, Role role) {
+    this.id = id;
+    this.nome = nome;
+    this.email = email;
+    this.senha = senha;
+    this.roleId = role;
   }
 
   public Long getId() {
@@ -60,5 +73,13 @@ public class Usuario {
 
   public void setSenha(String senha) {
     this.senha = senha;
+  }
+
+  public Role getRoleId() {
+    return roleId;
+  }
+
+  public void setRoleId(Role roleId) {
+    this.roleId = roleId;
   }
 }

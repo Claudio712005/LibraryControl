@@ -37,16 +37,17 @@ public class RouteScanner {
             boolean isPrivate = method.isAnnotationPresent(SecurityRoute.class);
 
             if (isPrivate) {
-              handler = new AuthMiddleware(handler);
+              handler = new AuthMiddleware(handler, method.getAnnotation(SecurityRoute.class).roles());
             }
 
             handler = new ExceptionMiddleware(handler);
 
             String prefix = (groupPrefix != null) ? groupPrefix.value() : "";
             String completePath = prefix + route.path();
+            String methodName = route.method().name();
 
-            Router.getInstance().addRoute(completePath, handler);
-            System.out.println("Rota registrada: " + Router.getInstance().getApiPrefix() + completePath + " -> " + method.getName() + " (" + (isPrivate ? "Privada" : "Pública") + ")");
+            Router.getInstance().addRoute(completePath, methodName, handler);
+            System.out.println("Rota registrada: " + Router.getInstance().getApiPrefix() + completePath + " -> " + method.getName() + " (" + (isPrivate ? "Privada" : "Pública") + ") - " + methodName );
           }
         }
 

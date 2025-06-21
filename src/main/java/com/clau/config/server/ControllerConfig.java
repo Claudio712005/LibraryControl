@@ -1,5 +1,6 @@
 package com.clau.config.server;
 
+import com.clau.util.ValidatorUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 
@@ -22,6 +23,17 @@ public class ControllerConfig {
     }
   }
 
+  protected void enviar(HttpExchange exchange, Object response, int statusCode) throws IOException {
+    String json = mapper.writeValueAsString(response);
+
+    byte[] responseBytes = json.getBytes("UTF-8");
+    exchange.sendResponseHeaders(statusCode, responseBytes.length);
+
+    try (OutputStream os = exchange.getResponseBody()) {
+      os.write(responseBytes);
+    }
+  }
+
   protected Object getParam(String param, HttpExchange exchange) {
     URI query = exchange.getRequestURI();
 
@@ -38,5 +50,17 @@ public class ControllerConfig {
     }
 
     return null;
+  }
+
+  protected Object getBody(HttpExchange exchange, Class<?> clazz) throws Exception {
+
+    if (exchange.getRequestBody() == null) {
+      return null;
+    }
+
+    Object body = mapper.readValue(exchange.getRequestBody(), clazz);
+    new ValidatorUtil().validateObject(body);
+
+    return body;
   }
 }

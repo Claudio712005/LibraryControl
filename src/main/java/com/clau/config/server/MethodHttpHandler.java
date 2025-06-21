@@ -27,7 +27,6 @@ public class MethodHttpHandler implements HttpHandler {
         throw new IllegalArgumentException("Método handler precisa receber um HttpExchange como parâmetro.");
       }
     } catch (InvocationTargetException e) {
-      // Lança a causa real (ex: NotFoundException)
       Throwable cause = e.getCause();
       if (cause instanceof RuntimeException) {
         throw (RuntimeException) cause;
