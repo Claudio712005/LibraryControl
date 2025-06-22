@@ -4,6 +4,7 @@ import com.clau.dao.GeneroDAO;
 import com.clau.exception.NotFoundException;
 import com.clau.model.Genero;
 
+import java.util.List;
 import java.util.logging.Logger;
 
 public class GeneroService {
@@ -23,5 +24,9 @@ public class GeneroService {
       throw new NotFoundException("Gênero não encontrado com ID: " + id);
     }
     return genero;
+  }
+
+  public List<Genero> findAll(){
+    return generoDAO.findAll();
   }
 }

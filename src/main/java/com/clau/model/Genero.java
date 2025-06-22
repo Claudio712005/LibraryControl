@@ -2,7 +2,10 @@ package com.clau.model;
 
 import com.clau.annotation.Column;
 import com.clau.annotation.Id;
+import com.clau.annotation.OneToMany;
 import com.clau.annotation.Table;
+
+import java.util.List;
 
 @Table(name = "generos")
 public class Genero {
@@ -16,6 +19,9 @@ public class Genero {
 
   @Column(name = "descricao")
   private String descricao;
+
+  @OneToMany(mappedBy = "genero_id", fkColumn = "genero_id", fetch = true)
+  private List<Livro> livros;
 
   public Genero() {
   }
@@ -48,5 +54,13 @@ public class Genero {
 
   public void setDescricao(String descricao) {
     this.descricao = descricao;
+  }
+
+  public List<Livro> getLivros() {
+    return livros;
+  }
+
+  public void setLivros(List<Livro> livros) {
+    this.livros = livros;
   }
 }

@@ -9,7 +9,7 @@ public class LivroRequestDTO {
   private String titulo;
   @NotNull(message = "O autor do livro não pode ser nulo.")
   private Long idAutor;
-  @NotNull(message = "O Genêro do livro não pode ser nulo.")
+  @NotNull(message = "O Gênero do livro não pode ser nulo.")
   private Long idGenero;
   @NotNull(message = "O ano de publicação do livro não pode ser nulo.")
   private Integer anoPublicacao;

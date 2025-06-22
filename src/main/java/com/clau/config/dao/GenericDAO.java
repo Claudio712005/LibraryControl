@@ -6,6 +6,7 @@ import com.clau.exception.AppDataException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.sql.*;
 import java.util.*;
 
@@ -152,7 +153,7 @@ public class GenericDAO<T> {
          ResultSet rs = stmt.executeQuery()) {
 
       if (rs.next()) {
-        return mapResultSet(rs);
+        return mapResultSet(rs, conn, false);
       }
     } catch (Exception e) {
       throw new RuntimeException("Erro ao buscar por ID com JOIN: " + e.getMessage(), e);
@@ -160,8 +161,24 @@ public class GenericDAO<T> {
     return null;
   }
 
+  public T findById(Long id, Connection existingConnection, boolean isChieldEntity) {
+    String sql = buildSelectQueryWithJoins(id);
+    try (PreparedStatement stmt = existingConnection.prepareStatement(sql);
+         ResultSet rs = stmt.executeQuery()) {
+
+      if (rs.next()) {
+        return mapResultSet(rs, existingConnection, isChieldEntity);
+      }
+    } catch (Exception e) {
+      throw new RuntimeException("Erro ao buscar por ID com JOIN: " + e.getMessage(), e);
+    }
+    return null;
+  }
+
+
   public List<T> findAll() {
     String sql = buildSelectQueryWithJoins(null);
+
     List<T> result = new ArrayList<>();
 
     try (Connection conn = DataBaseConfig.getConnection();
@@ -169,7 +186,7 @@ public class GenericDAO<T> {
          ResultSet rs = stmt.executeQuery()) {
 
       while (rs.next()) {
-        result.add(mapResultSet(rs));
+        result.add(mapResultSet(rs, conn, false));
       }
 
     } catch (Exception e) {
@@ -178,7 +195,6 @@ public class GenericDAO<T> {
 
     return result;
   }
-
 
   private String getIdColumn() {
     for (Field field : clazz.getDeclaredFields()) {
@@ -190,8 +206,19 @@ public class GenericDAO<T> {
     throw new RuntimeException("Classe " + clazz.getSimpleName() + " não tem campo com @Id");
   }
 
-  private T mapResultSet(ResultSet rs) throws Exception {
+  private Object getIdValue(T obj) throws Exception {
+    for (Field field : clazz.getDeclaredFields()) {
+      if (field.isAnnotationPresent(Id.class)) {
+        field.setAccessible(true);
+        return field.get(obj);
+      }
+    }
+    throw new RuntimeException("Campo @Id não encontrado na classe " + clazz.getName());
+  }
+
+  private T mapResultSet(ResultSet rs, Connection conn, boolean isChieldEntity) throws Exception {
     T obj = clazz.getDeclaredConstructor().newInstance();
+
     for (Field field : clazz.getDeclaredFields()) {
       field.setAccessible(true);
 
@@ -203,7 +230,7 @@ public class GenericDAO<T> {
         if (foreignKeyValue != null && manyToOne.fetch()) {
           Class<?> foreignClass = field.getType();
           GenericDAO<?> foreignDAO = new GenericDAO<>(foreignClass);
-          Object foreignObject = foreignDAO.findById(Long.parseLong(foreignKeyValue.toString()));
+          Object foreignObject = foreignDAO.findById(Long.parseLong(foreignKeyValue.toString()), conn, true);
           field.set(obj, foreignObject);
         }
 
@@ -218,8 +245,41 @@ public class GenericDAO<T> {
         } else {
           field.set(obj, value);
         }
+      } else if (field.isAnnotationPresent(OneToMany.class) && !isChieldEntity) {
+        OneToMany oneToMany = field.getAnnotation(OneToMany.class);
+        if (oneToMany.fetch()) {
+          ParameterizedType listType = (ParameterizedType) field.getGenericType();
+          Class<?> childClass = (Class<?>) listType.getActualTypeArguments()[0];
+
+          Table childTable = childClass.getAnnotation(Table.class);
+          if (childTable != null) {
+            String childTableName = childTable.name();
+            String mappedBy = oneToMany.mappedBy();
+
+            Object parentIdValue = getIdValue(obj);
+
+            String childSql = "SELECT * FROM " + childTableName + " WHERE " + mappedBy + " = ?";
+
+            List<Object> children = new ArrayList<>();
+
+            try (PreparedStatement childStmt = conn.prepareStatement(childSql)) {
+              childStmt.setObject(1, parentIdValue);
+
+              try (ResultSet childRs = childStmt.executeQuery()) {
+                GenericDAO<?> childDAO = new GenericDAO<>(childClass);
+                while (childRs.next()) {
+                  Object childObj = childDAO.mapResultSet(childRs, conn, true);
+                  children.add(childObj);
+                }
+              }
+            }
+
+            field.set(obj, children);
+          }
+        }
       }
     }
+
     return obj;
   }
 

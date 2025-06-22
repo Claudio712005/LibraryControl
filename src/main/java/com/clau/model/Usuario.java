@@ -5,6 +5,8 @@ import com.clau.annotation.Column;
 import com.clau.annotation.Id;
 import com.clau.annotation.Table;
 
+import java.util.List;
+
 @Table(name = "usuarios")
 public class Usuario {
 
@@ -23,6 +25,8 @@ public class Usuario {
 
   @Column(name = "role_id")
   private Role roleId;
+
+  private List<AluguelLivro> alugueis;
 
   public Usuario() {
   }
