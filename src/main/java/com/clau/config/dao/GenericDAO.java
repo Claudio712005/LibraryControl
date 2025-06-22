@@ -24,31 +24,47 @@ public class GenericDAO<T> {
     this.tableName = table.name();
   }
 
-  public void insert(T entity) {
+  public void save(T entity) {
     List<String> columns = new ArrayList<>();
-    List<String> placeholders = new ArrayList<>();
     List<Object> values = new ArrayList<>();
+    Object idValue = null;
+    String idColumn = null;
 
     for (Field field : clazz.getDeclaredFields()) {
-      if (field.isAnnotationPresent(Id.class)) continue;
+      if (field.isAnnotationPresent(Id.class)) {
+        field.setAccessible(true);
+        try {
+          idValue = field.get(entity);
+          Column column = field.getAnnotation(Column.class);
+          idColumn = column != null ? column.name() : field.getName();
+        } catch (IllegalAccessException e) {
+          throw new RuntimeException("Erro ao acessar o campo ID", e);
+        }
+        break;
+      }
+    }
+
+    for (Field field : clazz.getDeclaredFields()) {
+      if (field.isAnnotationPresent(OneToMany.class)) continue;
 
       field.setAccessible(true);
+
+      String columnName = null;
       Column column = field.getAnnotation(Column.class);
       ManyToOne manyToOne = field.getAnnotation(ManyToOne.class);
 
-      String columnName = "";
-
       if (manyToOne != null) {
         columnName = manyToOne.nameColumn();
+      } else if (column != null) {
+        columnName = column.name();
       } else {
-        columnName = column != null ? column.name() : field.getName();
+        columnName = field.getName();
       }
-
-      columns.add(columnName);
-      placeholders.add("?");
 
       try {
         Object value = field.get(entity);
+
+        if (field.isAnnotationPresent(Id.class)) continue;
 
         if (field.getType().isEnum()) {
           values.add(((Enum<?>) value).name());
@@ -63,24 +79,83 @@ public class GenericDAO<T> {
         } else {
           values.add(value);
         }
+
+        columns.add(columnName);
       } catch (IllegalAccessException | NoSuchFieldException e) {
         throw new RuntimeException(e);
       }
     }
 
-    String sql = "INSERT INTO " + tableName +
-            " (" + String.join(", ", columns) + ") " +
-            "VALUES (" + String.join(", ", placeholders) + ")";
+    String sql;
+
+    if (idValue != null) {
+      List<String> updateSet = new ArrayList<>();
+      for (String col : columns) {
+        updateSet.add(col + " = ?");
+      }
+
+      sql = "UPDATE " + tableName + " SET " + String.join(", ", updateSet) + " WHERE " + idColumn + " = ?";
+    } else {
+      String placeholders = String.join(", ", Collections.nCopies(columns.size(), "?"));
+      sql = "INSERT INTO " + tableName + " (" + String.join(", ", columns) + ") VALUES (" + placeholders + ")";
+    }
 
     try (Connection conn = DataBaseConfig.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
+         PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
       for (int i = 0; i < values.size(); i++) {
         stmt.setObject(i + 1, values.get(i));
       }
+
+      if (idValue != null) {
+        stmt.setObject(values.size() + 1, idValue);
+      }
+
       stmt.executeUpdate();
-    } catch (SQLException e) {
-      throw new RuntimeException("Erro ao inserir entidade: " + e.getMessage(), e);
+
+      if (idValue == null) {
+        try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+          if (generatedKeys.next()) {
+            Object generatedId = generatedKeys.getObject(1);
+            for (Field field : clazz.getDeclaredFields()) {
+              if (field.isAnnotationPresent(Id.class)) {
+                field.setAccessible(true);
+
+                Class<?> fieldType = field.getType();
+
+                if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+                  if (generatedId instanceof Number) {
+                    field.set(entity, ((Number) generatedId).longValue());
+                  }
+                } else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+                  if (generatedId instanceof Number) {
+                    field.set(entity, ((Number) generatedId).intValue());
+                  }
+                } else {
+                  field.set(entity, generatedId);
+                }
+
+                break;
+              }
+            }
+
+          }
+        }
+      }
+    } catch (SQLException | IllegalAccessException e) {
+      throw new RuntimeException("Erro ao salvar entidade: " + e.getMessage(), e);
+    }
+  }
+
+  public void delete(T entity) {
+    try {
+      Object idValue = getIdValue(entity);
+      if (idValue == null) {
+        throw new RuntimeException("Entidade não possui ID definido");
+      }
+      deleteById((Long) idValue);
+    } catch (Exception e) {
+      throw new RuntimeException("Erro ao remover entidade: " + e.getMessage(), e);
     }
   }
 
@@ -214,6 +289,10 @@ public class GenericDAO<T> {
       }
     }
     throw new RuntimeException("Campo @Id não encontrado na classe " + clazz.getName());
+  }
+
+  public T mapResultSet(ResultSet rs) throws Exception {
+    return mapResultSet(rs, DataBaseConfig.getConnection(), false);
   }
 
   private T mapResultSet(ResultSet rs, Connection conn, boolean isChieldEntity) throws Exception {

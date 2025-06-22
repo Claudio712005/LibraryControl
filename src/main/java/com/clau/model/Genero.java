@@ -4,6 +4,7 @@ import com.clau.annotation.Column;
 import com.clau.annotation.Id;
 import com.clau.annotation.OneToMany;
 import com.clau.annotation.Table;
+import com.clau.dto.request.GeneroRequestDTO;
 
 import java.util.List;
 
@@ -30,6 +31,15 @@ public class Genero {
     this.id = id;
     this.nome = nome;
     this.descricao = descricao;
+  }
+
+  public Genero(Long id){
+    this.id = id;
+  }
+
+  public Genero(GeneroRequestDTO requestDTO) {
+    this.nome = requestDTO.getNome();
+    this.descricao = requestDTO.getDescricao();
   }
 
   public Long getId() {

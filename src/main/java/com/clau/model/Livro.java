@@ -4,6 +4,7 @@ import com.clau.annotation.Column;
 import com.clau.annotation.Id;
 import com.clau.annotation.ManyToOne;
 import com.clau.annotation.Table;
+import com.clau.dto.request.LivroRequestDTO;
 
 @Table(name = "livros")
 public class Livro {
@@ -27,16 +28,29 @@ public class Livro {
   @Column(name = "descricao")
   private String descricao;
 
+  @Column(name = "disponivel")
+  private Boolean disponivel;
+
   public Livro() {
   }
 
-  public Livro(Long id, String titulo, Autor autor, Integer anoPublicacao, Genero genero, String descricao) {
+  public Livro(Long id, String titulo, Autor autor, Integer anoPublicacao, Genero genero, String descricao, Boolean disponivel) {
     this.id = id;
     this.titulo = titulo;
     this.autor = autor;
     this.anoPublicacao = anoPublicacao;
     this.genero = genero;
     this.descricao = descricao;
+    this.disponivel = disponivel;
+  }
+
+  public Livro(LivroRequestDTO requestDTO) {
+    this.titulo = requestDTO.getTitulo();
+    this.autor = new Autor(requestDTO.getIdAutor());
+    this.anoPublicacao = requestDTO.getAnoPublicacao();
+    this.genero = new Genero(requestDTO.getIdGenero());
+    this.descricao = requestDTO.getDescricao();
+    this.disponivel = true;
   }
 
   public Long getId() {
@@ -85,5 +99,13 @@ public class Livro {
 
   public void setDescricao(String descricao) {
     this.descricao = descricao;
+  }
+
+  public Boolean getDisponivel() {
+    return disponivel;
+  }
+
+  public void setDisponivel(Boolean disponivel) {
+    this.disponivel = disponivel;
   }
 }

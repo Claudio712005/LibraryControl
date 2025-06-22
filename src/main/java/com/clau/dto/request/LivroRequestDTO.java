@@ -2,10 +2,12 @@ package com.clau.dto.request;
 
 import com.clau.annotation.NotBlank;
 import com.clau.annotation.NotNull;
+import com.clau.annotation.Size;
 
 public class LivroRequestDTO {
 
   @NotBlank(message = "O título do livro não pode ser vazio.")
+  @Size(min = 1, max = 100, message = "O título do livro deve ter entre 1 e 100 caracteres.")
   private String titulo;
   @NotNull(message = "O autor do livro não pode ser nulo.")
   private Long idAutor;

@@ -64,6 +64,6 @@ public class UsuarioService {
       throw new ConflictException("Já existe um usuário cadastrado com o email: " + requestDTO.getEmail());
     }
 
-    usuarioDAO.insert(UsuarioMapper.toEntity(requestDTO));
+    usuarioDAO.save(UsuarioMapper.toEntity(requestDTO));
   }
 }

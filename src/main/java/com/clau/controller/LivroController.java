@@ -42,4 +42,22 @@ public class LivroController extends ControllerConfig {
     service.cadastrarLisvro((LivroRequestDTO) this.getBody(exchange, LivroRequestDTO.class));
     enviar(exchange, "Livro cadastrado com sucesso!", 201);
   }
+
+  @Route(path = "/{id}", method = HttpMethod.PUT)
+  @SecurityRoute(roles = Role.ADMIN)
+  public void atualizarLivro(HttpExchange exchange) throws Exception {
+    Long id = Long.parseLong(Optional.ofNullable(getPathVariable("id", exchange))
+            .orElseThrow(() -> new BadRequestException("ID do livro não informado.")));
+    service.atualizarLivro(id, (LivroRequestDTO) this.getBody(exchange, LivroRequestDTO.class));
+    enviar(exchange, "Livro atualizado com sucesso!");
+  }
+
+  @Route(path = "/{id}", method = HttpMethod.DELETE)
+  @SecurityRoute(roles = Role.ADMIN)
+  public void excluirLivro(HttpExchange exchange) throws IOException {
+    Long id = Long.parseLong(Optional.ofNullable(getPathVariable("id", exchange))
+            .orElseThrow(() -> new BadRequestException("ID do livro não informado.")));
+    service.excluirLivro(id);
+    enviar(exchange, "Livro excluído com sucesso!");
+  }
 }

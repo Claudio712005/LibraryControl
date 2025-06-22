@@ -1,10 +1,8 @@
 package com.clau.service;
 
-import com.clau.dao.AutorDAO;
-import com.clau.dao.GeneroDAO;
 import com.clau.dao.LivroDAO;
 import com.clau.dto.request.LivroRequestDTO;
-import com.clau.dto.response.LivroResponseDTO;
+import com.clau.exception.ConflictException;
 import com.clau.exception.NotFoundException;
 import com.clau.model.Autor;
 import com.clau.model.Genero;
@@ -42,6 +40,11 @@ public class LivroService {
 
   public void cadastrarLisvro(LivroRequestDTO requestDTO){
 
+    if (livroDAO.existsByTitulo(requestDTO.getTitulo())) {
+      logger.warning("Livro com título '" + requestDTO.getTitulo() + "' já existe.");
+      throw new ConflictException("Livro já cadastrado com este título.");
+    }
+
     Autor autor = autorService.findById(requestDTO.getIdAutor());
 
     Genero genero = generoService.findById(requestDTO.getIdGenero());
@@ -53,6 +56,33 @@ public class LivroService {
     livro.setGenero(genero);
     livro.setDescricao(requestDTO.getDescricao());
 
-    livroDAO.insert(livro);
+    livroDAO.save(livro);
+  }
+
+  public void atualizarLivro(Long id, LivroRequestDTO requestDTO) {
+    Livro livroExistente = findById(id);
+
+    Autor autor = autorService.findById(requestDTO.getIdAutor());
+    Genero genero = generoService.findById(requestDTO.getIdGenero());
+
+    Livro livroDuplicado = livroDAO.findByTitulo(requestDTO.getTitulo());
+    if (livroDuplicado != null && !livroDuplicado.getId().equals(id)) {
+      logger.warning("Livro com título '" + requestDTO.getTitulo() + "' já existe.");
+      throw new ConflictException("Já existe um livro cadastrado com este título.");
+    }
+
+    livroExistente.setTitulo(requestDTO.getTitulo());
+    livroExistente.setAutor(autor);
+    livroExistente.setAnoPublicacao(requestDTO.getAnoPublicacao());
+    livroExistente.setGenero(genero);
+    livroExistente.setDescricao(requestDTO.getDescricao());
+
+    livroDAO.save(livroExistente);
+  }
+
+  public void excluirLivro(Long id) {
+    Livro livro = findById(id);
+    livroDAO.delete(livro);
+    logger.info("Livro com ID " + id + " excluído com sucesso.");
   }
 }

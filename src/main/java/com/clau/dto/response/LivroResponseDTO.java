@@ -14,14 +14,16 @@ public class LivroResponseDTO {
   private Integer anoPublicacao;
   private String genero;
   private String descricao;
+  private Boolean disponivel;
 
-  public LivroResponseDTO(Long id, String titulo, String autor, Integer anoPublicacao, String genero, String descricao) {
+  public LivroResponseDTO(Long id, String titulo, String autor, Integer anoPublicacao, String genero, String descricao, Boolean disponivel) {
     this.id = id;
     this.titulo = titulo;
     this.autor = autor;
     this.anoPublicacao = anoPublicacao;
     this.genero = genero;
     this.descricao = descricao;
+    this.disponivel = Objects.requireNonNullElse(disponivel, false);
   }
 
   public LivroResponseDTO(Livro livro) {
@@ -31,6 +33,7 @@ public class LivroResponseDTO {
     this.anoPublicacao = livro.getAnoPublicacao();
     this.genero = livro.getGenero().getNome();
     this.descricao = livro.getDescricao();
+    this.disponivel = Objects.requireNonNullElse(livro.getDisponivel(), false);
   }
 
   public LivroResponseDTO() {
