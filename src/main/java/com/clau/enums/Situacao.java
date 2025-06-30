@@ -6,14 +6,23 @@ public enum Situacao {
   DEVOLVIDO("Devolvido"),
   ATRASADO("Atrasado");
 
-  private final String descricao;
+  private final String nome;
 
-  Situacao(String descricao) {
-    this.descricao = descricao;
+  Situacao(String nome) {
+    this.nome = nome;
   }
 
-  public String getDescricao() {
-    return descricao;
+  public String getNome() {
+    return nome;
+  }
+
+  public static Situacao fromNome(String nome) {
+    for (Situacao situacao : Situacao.values()) {
+      if (situacao.getNome().equalsIgnoreCase(nome)) {
+        return situacao;
+      }
+    }
+    throw new IllegalArgumentException("Situacao do usuário não foi encontrada com o nome: " + nome);
   }
 
 }

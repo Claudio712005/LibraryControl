@@ -1,6 +1,9 @@
 package com.clau.dto.response;
 
 import com.clau.enums.Role;
+import com.clau.model.Usuario;
+
+import java.util.Optional;
 
 public class UsuarioResponseDTO {
 
@@ -24,6 +27,13 @@ public class UsuarioResponseDTO {
   }
 
   public UsuarioResponseDTO() {
+  }
+
+  public UsuarioResponseDTO(Usuario usuario){
+    this.id = usuario.getId();
+    this.nome = usuario.getNome();
+    this.email = usuario.getEmail();
+    this.role = Optional.ofNullable(usuario.getRoleId()).map(Role::getNome).orElse("N/A");
   }
 
   public Long getId() {

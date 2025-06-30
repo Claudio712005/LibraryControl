@@ -27,10 +27,10 @@ public class AluguelLivro {
   @Column(name = "situacao")
   private Situacao situacao;
 
-  @ManyToOne(nameColumn = "id_livro", foreignKey = "id", fetch = true)
+  @ManyToOne(nameColumn = "livro_id", foreignKey = "id", fetch = true)
   private Livro livro;
 
-  @ManyToOne(nameColumn = "id_cliente", foreignKey = "id", fetch = true)
+  @ManyToOne(nameColumn = "cliente_id", foreignKey = "id", fetch = true)
   private Usuario cliente;
 
   public AluguelLivro() {

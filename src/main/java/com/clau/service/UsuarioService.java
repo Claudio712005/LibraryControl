@@ -34,7 +34,7 @@ public class UsuarioService {
 
     Usuario usuario = null;
 
-    try{
+    try {
       usuario = usuarioDAO.getUsuarioByEmailAndSenha(email, senha);
     } catch (Exception e) {
       throw new AppDataException("Erro ao buscar usuário: " + e.getMessage());
@@ -49,12 +49,12 @@ public class UsuarioService {
     }
   }
 
-  public void cadastrar(UsuarioRequestDTO requestDTO){
-    if(requestDTO == null || requestDTO.getNome() == null || requestDTO.getEmail() == null || requestDTO.getSenha() == null) {
+  public void cadastrar(UsuarioRequestDTO requestDTO) {
+    if (requestDTO == null || requestDTO.getNome() == null || requestDTO.getEmail() == null || requestDTO.getSenha() == null) {
       throw new BadRequestException("Dados do usuário inválidos para cadastro.");
     }
 
-    if(!requestDTO.getSenha().equals(requestDTO.getConfirmacaoSenha())){
+    if (!requestDTO.getSenha().equals(requestDTO.getConfirmacaoSenha())) {
       throw new BadRequestException("As senhas não coincidem.");
     }
 
@@ -65,5 +65,19 @@ public class UsuarioService {
     }
 
     usuarioDAO.save(UsuarioMapper.toEntity(requestDTO));
+  }
+
+  public Usuario findById(Long id) {
+    if (id == null) {
+      throw new BadRequestException("O ID do usuário não pode ser nulo.");
+    }
+
+    Usuario usuario = usuarioDAO.findById(id);
+
+    if (usuario == null) {
+      throw new NotFoundException("Usuário não encontrado com o ID: " + id);
+    }
+
+    return usuario;
   }
 }

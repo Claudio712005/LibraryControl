@@ -1,12 +1,15 @@
 package com.clau.config.server;
 
+import com.clau.serializer.LocalDateTimeSerializer;
 import com.clau.util.ValidatorUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.time.LocalDateTime;
 
 public class ControllerConfig {
 
@@ -24,6 +27,9 @@ public class ControllerConfig {
   }
 
   protected void enviar(HttpExchange exchange, Object response, int statusCode) throws IOException {
+    SimpleModule module = new SimpleModule().addSerializer(LocalDateTime.class, new LocalDateTimeSerializer());
+    mapper.registerModule(module);
+
     String json = mapper.writeValueAsString(response);
 
     byte[] responseBytes = json.getBytes("UTF-8");

@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.sql.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class GenericDAO<T> {
@@ -295,6 +296,14 @@ public class GenericDAO<T> {
     return mapResultSet(rs, DataBaseConfig.getConnection(), false);
   }
 
+  public List<T> mapResultSetList(ResultSet rs) throws Exception {
+    List<T> list = new ArrayList<>();
+    while (rs.next()) {
+      list.add(mapResultSet(rs, DataBaseConfig.getConnection(), false));
+    }
+    return list;
+  }
+
   private T mapResultSet(ResultSet rs, Connection conn, boolean isChieldEntity) throws Exception {
     T obj = clazz.getDeclaredConstructor().newInstance();
 
@@ -321,6 +330,14 @@ public class GenericDAO<T> {
           Method fromNome = field.getType().getMethod("fromNome", String.class);
           Object enumValue = fromNome.invoke(null, (String) value);
           field.set(obj, enumValue);
+        } else if (field.getType().equals(LocalDateTime.class)) {
+          if (value instanceof Timestamp) {
+            field.set(obj, ((Timestamp) value).toLocalDateTime());
+          } else if (value instanceof String) {
+            field.set(obj, LocalDateTime.parse((String) value));
+          } else {
+            throw new IllegalArgumentException("Não é possível converter " + value.getClass() + " para LocalDateTime");
+          }
         } else {
           field.set(obj, value);
         }
