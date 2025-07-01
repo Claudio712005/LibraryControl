@@ -12,19 +12,26 @@ import com.clau.config.server.MethodHttpHandler;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 public class RouteScanner {
 
+  private static final Logger LOGGER = Logger.getLogger(RouteScanner.class.getName());
+
   public static void scanPackage(String packageName) {
 
-    File[] files = PackageUtil.getClassFromPackage(packageName);
+    List<Class> classes = new ArrayList<>();
 
-    if (files == null) return;
+    try{
+      classes = PackageUtil.listarClassesPacote(packageName);
+    } catch (Exception e) {
+      LOGGER.severe("Erro ao listar classes do pacote: " + packageName + " - " + e.getMessage());
+    }
 
-    for (File file : files) {
-      String className = packageName + "." + file.getName().replace(".class", "");
+    for (Class<?> clazz : classes) {
       try {
-        Class<?> clazz = Class.forName(className);
         Object controllerInstance = clazz.getDeclaredConstructor().newInstance();
 
         GroupPrefix groupPrefix = clazz.getAnnotation(GroupPrefix.class);
@@ -52,7 +59,7 @@ public class RouteScanner {
         }
 
       } catch (Exception e) {
-        throw new RuntimeException("Erro ao registrar " + className, e);
+        throw new RuntimeException("Erro ao registrar " + clazz.getName(), e);
       }
     }
   }

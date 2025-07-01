@@ -7,11 +7,13 @@ import com.clau.exception.AppDataException;
 import com.clau.util.PackageUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Logger;
 
 public class ValidateModels {
@@ -24,19 +26,11 @@ public class ValidateModels {
     this.dataBaseConfig = new DataBaseConfig();
   }
 
-  public void validarDataModels() {
-    PackageUtil.initializeClassesInPackage(MODEL_PACKAGE);
-    File[] modelFiles = PackageUtil.getClassFromPackage(MODEL_PACKAGE);
+  public void validarDataModels() throws IOException {
+    List<Class> models = PackageUtil.listarClassesPacote(MODEL_PACKAGE);
 
-    if (modelFiles == null || modelFiles.length == 0) {
-      logger.warning("Nenhum modelo encontrado no pacote 'com.clau.model'.");
-    }
-
-    for (File modelFile : modelFiles) {
-      String className = MODEL_PACKAGE + "." + modelFile.getName().replace(".class", "");
+    for (Class<?> clazz : models) {
       try {
-        Class<?> clazz = Class.forName(className);
-
         if (clazz.isAnnotationPresent(Table.class)) {
           try (Connection con = DataBaseConfig.getConnection()) {
             logger.info("Validando model: " + clazz.getName());
@@ -97,7 +91,7 @@ public class ValidateModels {
         }
 
       } catch (Exception e) {
-        logger.severe("Erro ao carregar modelo: " + className + " - " + e.getMessage());
+        logger.severe("Erro ao carregar modelo: "  + e.getMessage());
       }
     }
   }

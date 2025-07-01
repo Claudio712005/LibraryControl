@@ -336,7 +336,7 @@ public class GenericDAO<T> {
           } else if (value instanceof String) {
             field.set(obj, LocalDateTime.parse((String) value));
           } else {
-            throw new IllegalArgumentException("Não é possível converter " + value.getClass() + " para LocalDateTime");
+            continue;
           }
         } else {
           field.set(obj, value);

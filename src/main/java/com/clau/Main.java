@@ -3,6 +3,7 @@ package com.clau;
 import com.clau.config.database.ValidateModels;
 import com.clau.config.server.Router;
 import com.clau.config.server.RouteScanner;
+import com.clau.scheduler.AluguelAtrasoScheduler;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.IOException;
@@ -23,5 +24,8 @@ public class Main {
     server.setExecutor(null);
     server.start();
     System.out.println("Servidor rodando em http://localhost:8080/");
+
+    AluguelAtrasoScheduler scheduler = new AluguelAtrasoScheduler();
+    scheduler.iniciar();
   }
 }

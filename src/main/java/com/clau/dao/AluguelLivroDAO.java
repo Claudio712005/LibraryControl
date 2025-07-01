@@ -2,6 +2,7 @@ package com.clau.dao;
 
 import com.clau.config.dao.GenericDAO;
 import com.clau.config.database.DataBaseConfig;
+import com.clau.enums.Situacao;
 import com.clau.model.AluguelLivro;
 
 import java.sql.ResultSet;
@@ -31,4 +32,15 @@ public class AluguelLivroDAO extends GenericDAO<AluguelLivro> {
     return this.mapResultSetList(resultSet);
   }
 
+  public List<AluguelLivro> buscarAlugueiPorSituacao(Situacao situacao) throws Exception {
+
+    if (situacao == null) {
+      throw new IllegalArgumentException("A situação não pode ser nula.");
+    }
+
+    String query = "SELECT * FROM aluguel_livro WHERE situacao = ?";
+
+    ResultSet resultSet = this.executeQuery(query, situacao.getNome());
+    return this.mapResultSetList(resultSet);
+  }
 }

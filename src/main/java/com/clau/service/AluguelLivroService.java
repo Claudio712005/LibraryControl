@@ -2,6 +2,8 @@ package com.clau.service;
 
 import com.clau.dao.AluguelLivroDAO;
 import com.clau.dto.request.AluguelLivroRequestDTO;
+import com.clau.dto.response.AluguelAtrasoResponseDTO;
+import com.clau.dto.response.AluguelLivroResponseDTO;
 import com.clau.enums.Role;
 import com.clau.enums.Situacao;
 import com.clau.exception.BadRequestException;
@@ -12,7 +14,9 @@ import com.clau.model.Usuario;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class AluguelLivroService {
 
@@ -49,7 +53,7 @@ public class AluguelLivroService {
     Livro livro = livroService.findById(requestDTO.getIdLivro());
     Usuario usuario = usuarioService.findById(requestDTO.getIdUsuario());
 
-    if(Role.ADMIN.equals(usuario.getRoleId())){
+    if (Role.ADMIN.equals(usuario.getRoleId())) {
       throw new BadRequestException("Usuários com papel de ADMIN não podem alugar livros.");
     }
 
@@ -115,6 +119,36 @@ public class AluguelLivroService {
     }
 
     aluguelLivro.setDataHoraDevolucao(novaDataDevolucao);
+    aluguelLivroDAO.save(aluguelLivro);
+  }
+
+  public List<AluguelLivro> buscarAlugueisPorSituacao(Situacao situacao) throws Exception {
+    if (situacao == null) {
+      throw new BadRequestException("A situação não pode ser nula.");
+    }
+
+    return aluguelLivroDAO.buscarAlugueiPorSituacao(situacao);
+  }
+
+  public List<AluguelAtrasoResponseDTO> listarClientesComAtraso() throws Exception {
+    List<AluguelLivro> alugueisAtrasados = buscarAlugueisPorSituacao(Situacao.ATRASADO);
+
+    Map<Usuario, List<AluguelLivro>> usuariosComAlugueisAtrasados = alugueisAtrasados.stream()
+            .collect(Collectors.groupingBy(AluguelLivro::getCliente));
+
+    return usuariosComAlugueisAtrasados.entrySet().stream()
+            .map(entry -> new AluguelAtrasoResponseDTO(entry.getKey(), entry.getValue()))
+            .toList();
+  }
+
+  public void atrasarAluguel(Long idAluguel) {
+    AluguelLivro aluguelLivro = findById(idAluguel);
+
+    if (Situacao.DEVOLVIDO.equals(aluguelLivro.getSituacao())) {
+      throw new BadRequestException("O livro já foi devolvido e não pode ser atrasado.");
+    }
+
+    aluguelLivro.setSituacao(Situacao.ATRASADO);
     aluguelLivroDAO.save(aluguelLivro);
   }
 

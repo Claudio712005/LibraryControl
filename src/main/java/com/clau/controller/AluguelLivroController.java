@@ -5,6 +5,7 @@ import com.clau.annotation.Route;
 import com.clau.annotation.SecurityRoute;
 import com.clau.config.server.ControllerConfig;
 import com.clau.dto.request.AluguelLivroRequestDTO;
+import com.clau.dto.response.AluguelAtrasoResponseDTO;
 import com.clau.dto.response.AluguelLivroResponseDTO;
 import com.clau.enums.HttpMethod;
 import com.clau.enums.Role;
@@ -83,5 +84,18 @@ public class AluguelLivroController extends ControllerConfig {
 
     aluguelLivroService.estenderAluguel(idAluguel, novaDataDevolucao);
     this.enviar(exchange, "Prazo de aluguel estendido com sucesso", 200);
+  }
+
+  @Route(path = "/atrasados", method = HttpMethod.GET)
+  @SecurityRoute(roles = Role.ADMIN)
+  public void buscarAlugueisAtrasados(HttpExchange exchange) throws Exception {
+    List<AluguelAtrasoResponseDTO> alugueisAtrasados = aluguelLivroService.listarClientesComAtraso();
+
+    if (alugueisAtrasados.isEmpty()) {
+      this.enviar(exchange, null, 204);
+      return;
+    }
+
+    this.enviar(exchange, alugueisAtrasados, 200);
   }
 }
