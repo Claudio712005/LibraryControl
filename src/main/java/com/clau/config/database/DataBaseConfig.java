@@ -23,6 +23,13 @@ public class DataBaseConfig {
     USER_DB = propertiesConfig.getProperty("db.user");
     PASSWORD_DB = propertiesConfig.getProperty("db.password");
     URL_DB = propertiesConfig.getProperty("db.url");
+
+    if (USER_DB == null || PASSWORD_DB == null || URL_DB == null) {
+      logger.severe("Configuração do banco de dados não encontrada. Verifique o arquivo de propriedades.");
+      throw new RuntimeException("Configuração do banco de dados não encontrada. Verifique o arquivo de propriedades.");
+    }
+
+    logger.config("Configuração do banco de dados carregada com sucesso: %s, %s, %s".formatted(USER_DB, PASSWORD_DB, URL_DB));
   }
 
   public static Connection getConnection() {

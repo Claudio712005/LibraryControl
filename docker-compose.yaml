@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: mydb
+    volumes:
+      - ./db/script.sql:/docker-entrypoint-initdb.d/script.sql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  api:
+    image: clau2005/library_api:latest
+    container_name: library_api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_USER: root
+      DB_PASSWORD: root_password
+      DB_URL: jdbc:mysql://db:3306/mydb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      JWT_SECRET: mysecretkey
+      JWT_EXPIRATION_TIME: 360000
+      INIT_DB_MODELS: "true"
+    ports:
+      - "8080:8080"
