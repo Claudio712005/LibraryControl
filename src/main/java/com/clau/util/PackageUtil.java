@@ -25,7 +25,6 @@ public class PackageUtil {
     List<String> classNames = new ArrayList<>();
 
     if (resource.getProtocol().equals("file")) {
-      // Diretório no sistema de arquivos
       File directory = new File(resource.getFile());
       File[] files = directory.listFiles((dir, name) -> name.endsWith(".class"));
       if (files != null) {
